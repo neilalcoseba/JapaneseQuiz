@@ -1,16 +1,16 @@
 package org.alcoseba.japanesequiz;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.Reader;
 import java.sql.SQLException;
-import java.util.Properties;
 
 public class App {
 	public static void main(String[] args) throws SQLException {
-		String url = "jdbc:postgresql://localhost/postgres";
-		Properties props = new Properties();
-		props.setProperty("user","postgres");
-		props.setProperty("password","root");
-		Connection conn = DriverManager.getConnection(url, props);
+		try {
+			Reader in = new FileReader("path/to/file.csv");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 }
