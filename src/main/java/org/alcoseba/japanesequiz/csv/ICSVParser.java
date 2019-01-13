@@ -1,4 +1,4 @@
-package org.alcoseba.japanesequiz.util.csv;
+package org.alcoseba.japanesequiz.csv;
 
 import java.io.File;
 
