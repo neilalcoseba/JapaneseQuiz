@@ -6,4 +6,6 @@ public interface IDictionaryDAO {
 	Dictionary getByName(String name);
 
 	int save(Dictionary dictionary);
+	
+	Dictionary[] getAll();
 }

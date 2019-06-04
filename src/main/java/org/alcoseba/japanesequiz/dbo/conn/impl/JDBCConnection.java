@@ -9,7 +9,7 @@ import org.alcoseba.japanesequiz.dbo.conn.IConnection;
 
 public class JDBCConnection implements IConnection {
 
-	private String url = "jdbc:postgresql://localhost/postgres";
+	private String url = "jdbc:postgresql://172.19.118.202:5432/japanese_db";
 	private Properties props = new Properties();
 
 	public JDBCConnection() throws SQLException {
