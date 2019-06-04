@@ -2,8 +2,9 @@ package org.alcoseba.japanesequiz.util;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -17,53 +18,77 @@ public class ImageGenerator {
 		this.file = file;
 	}
 	
-	public void generate(String kana, String kanji) {
-		int width = 854;
-		int height = 480;
-
-		BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		Graphics2D g2d = bufferedImage.createGraphics();
-
-		// g2d.setColor(Color.white);
-		g2d.fillRect(0, 0, width, height);
-		g2d.setColor(Color.black);
-		g2d.setFont(new Font("MS Gothic", Font.PLAIN, 13));
-		Font currentFont = g2d.getFont();
-		FontMetrics fontMetrics = g2d.getFontMetrics();
-		int fontWidth = fontMetrics.stringWidth(kana);
-		System.out.println(fontWidth);
-		
-		Font kanaFont = currentFont.deriveFont(currentFont.getSize() * 5F);
-		g2d.setFont(kanaFont);
-		g2d.drawString(kana, 0, fontMetrics.getHeight() * 2 + 20);
-		
-		Font newFont = currentFont.deriveFont(currentFont.getSize() * 20F);
-		g2d.setFont(newFont);
-
-		fontMetrics = g2d.getFontMetrics();
-		fontWidth = fontMetrics.stringWidth(kanji);
-		int fontHeight = fontMetrics.getHeight();
-		
-		if (fontWidth > width) {
-			newFont = currentFont.deriveFont(currentFont.getSize() * 10F);
-			g2d.setFont(newFont);
-			
-			fontMetrics = g2d.getFontMetrics();
-			fontWidth = fontMetrics.stringWidth(kanji);
-		}
-		
-		System.out.println("fontWidth : " + fontWidth + " ; fontHeight : " + fontHeight);
-		int x = (width - fontWidth) / 2;
-		int y = ((height - fontHeight) / 2) + fontMetrics.getAscent();
-		System.out.println("x : " + x + " ; y : " + y);
-		
-		g2d.drawString(kanji, x, y);
-		g2d.dispose();
-
-		try {
-			ImageIO.write(bufferedImage, "jpg", file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void generate(String kana, String kanji) {	
+        Font initialFont = new Font("MS Gothic", Font.PLAIN, 50);
+        BufferedImage textImg = createTextImage(kanji, 854, 480, 0,
+                initialFont, Color.BLACK, Color.GRAY);
+        writeImage(this.file, textImg);
 	}
+	
+	private BufferedImage createTextImage(String text, int targetWidth,
+            int targetHeight, int textYOffset, Font font, Color textColor, Color bgColor) {
+
+        // The final image
+        BufferedImage finalImg = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D finalImgG = finalImg.createGraphics();        
+        Font closestFont = scaleFont(finalImg, font, text);
+        finalImgG.setFont(closestFont);
+
+        // Create new image to fit text
+        int textWidth = finalImgG.getFontMetrics().stringWidth(text);
+        int textHeight = finalImgG.getFontMetrics().getHeight();
+        BufferedImage textImg = createBackgroundImg(textWidth, textHeight * 2, bgColor);
+
+        // Draw text
+        Graphics2D textImgG = textImg.createGraphics();
+        textImgG.setFont(closestFont);
+        textImgG.setColor(textColor);
+        textImgG.drawString(text, 0, textHeight);
+
+        // Scale text image
+        double scale = getScale(textImg.getWidth(), textImg.getHeight(),
+                targetWidth, targetHeight);
+        Image resized = textImg.getScaledInstance((int) (textImg.getWidth() * scale),
+                (int) (textImg.getHeight() * scale), Image.SCALE_SMOOTH);
+
+        // Draw text image onto final image
+        finalImgG.drawImage(resized, 0, textYOffset, null);
+        return finalImg;
+    }
+
+    private Font scaleFont(BufferedImage img, Font font, String text) {
+        Graphics2D g2D = img.createGraphics();
+        g2D.setFont(font);
+        double scale = getScale(g2D.getFontMetrics().stringWidth(text), 
+                g2D.getFontMetrics().getHeight(), img.getWidth(), 
+                img.getHeight());
+        return g2D.getFont().deriveFont(AffineTransform.getScaleInstance(scale, scale));
+    }
+
+    private double getScale(int width, int height, int targetWidth, int targetHeight) {
+        assert width > 0 && height > 0 : "width and height must be > 0";
+        double scaleX = (double) targetWidth / width;
+        double scaleY = (double) targetHeight / height;
+        return scaleX > scaleY ? scaleY : scaleX;
+    }
+
+    private BufferedImage createBackgroundImg(int width, int height, Color color) {
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < bufferedImage.getWidth(); x++) {
+            for (int y = 0; y < bufferedImage.getHeight(); y++) {
+                bufferedImage.setRGB(x, y, color.getRGB());
+            }
+        }
+        return bufferedImage;
+    }
+
+    private void writeImage(File destinationImage, 
+            BufferedImage bufferedImage) {
+        try {
+            ImageIO.write(bufferedImage, "jpg", destinationImage);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Image Saved");
+    }
 }
